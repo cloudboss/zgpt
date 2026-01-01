@@ -253,6 +253,7 @@ pub fn listPartitions(context: *GptContext, allocator: Allocator) ![]PartitionIn
     }
     
     var partitions = try allocator.alloc(PartitionInfo, count);
+    errdefer allocator.free(partitions);
     var index: usize = 0;
     
     for (entries, 0..) |*entry, i| {

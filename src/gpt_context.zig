@@ -143,6 +143,11 @@ pub const GptContext = struct {
             try self.readPrimaryHeader();
         }
         
+        // If partition entries are already loaded, don't reload them
+        if (self.partition_entries != null) {
+            return;
+        }
+
         const header = self.primary_header.?;
         const entries_lba = header.getPartitionLba();
         const num_entries = header.getNumPartitions();
