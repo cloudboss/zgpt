@@ -58,54 +58,46 @@ pub const Guid = extern struct {
     node: [6]u8,
 
     pub fn isEmpty(self: *const Guid) bool {
-        return self.time_low == 0 and 
-               self.time_mid == 0 and 
-               self.time_hi_and_version == 0 and 
-               self.clock_seq_hi == 0 and 
-               self.clock_seq_low == 0 and
-               std.mem.eql(u8, &self.node, &[_]u8{0} ** 6);
+        return self.time_low == 0 and
+            self.time_mid == 0 and
+            self.time_hi_and_version == 0 and
+            self.clock_seq_hi == 0 and
+            self.clock_seq_low == 0 and
+            std.mem.eql(u8, &self.node, &[_]u8{0} ** 6);
     }
 
     pub fn fromString(str: []const u8) !Guid {
         // Parse UUID string format like "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
         if (str.len != 36) return GptError.InvalidUuid;
-        
+
         var guid: Guid = undefined;
-        
+
         // Parse time_low (8 hex chars)
         guid.time_low = try std.fmt.parseInt(u32, str[0..8], 16);
-        
+
         // Parse time_mid (4 hex chars)
         guid.time_mid = try std.fmt.parseInt(u16, str[9..13], 16);
-        
+
         // Parse time_hi_and_version (4 hex chars)
         guid.time_hi_and_version = try std.fmt.parseInt(u16, str[14..18], 16);
-        
+
         // Parse clock_seq_hi and clock_seq_low (2 hex chars each)
         guid.clock_seq_hi = try std.fmt.parseInt(u8, str[19..21], 16);
         guid.clock_seq_low = try std.fmt.parseInt(u8, str[21..23], 16);
-        
+
         // Parse node (12 hex chars, 6 bytes)
         var i: usize = 0;
         while (i < 6) : (i += 1) {
-            guid.node[i] = try std.fmt.parseInt(u8, str[24 + i * 2..24 + i * 2 + 2], 16);
+            guid.node[i] = try std.fmt.parseInt(u8, str[24 + i * 2 .. 24 + i * 2 + 2], 16);
         }
-        
+
         return guid;
     }
-    
+
     pub fn toString(self: *const Guid, buffer: []u8) ![]const u8 {
         if (buffer.len < 36) return error.BufferTooSmall;
-        
-        return std.fmt.bufPrint(buffer, "{X:0>8}-{X:0>4}-{X:0>4}-{X:0>2}{X:0>2}-{X:0>2}{X:0>2}{X:0>2}{X:0>2}{X:0>2}{X:0>2}", .{
-            self.time_low,
-            self.time_mid,
-            self.time_hi_and_version,
-            self.clock_seq_hi,
-            self.clock_seq_low,
-            self.node[0], self.node[1], self.node[2],
-            self.node[3], self.node[4], self.node[5]
-        });
+
+        return std.fmt.bufPrint(buffer, "{X:0>8}-{X:0>4}-{X:0>4}-{X:0>2}{X:0>2}-{X:0>2}{X:0>2}{X:0>2}{X:0>2}{X:0>2}{X:0>2}", .{ self.time_low, self.time_mid, self.time_hi_and_version, self.clock_seq_hi, self.clock_seq_low, self.node[0], self.node[1], self.node[2], self.node[3], self.node[4], self.node[5] });
     }
 };
 
@@ -120,15 +112,15 @@ pub const GptEntry = extern struct {
     pub fn isEmpty(self: *const GptEntry) bool {
         return self.type_guid.isEmpty();
     }
-    
+
     pub fn getStartLba(self: *const GptEntry) u64 {
         return std.mem.littleToNative(u64, self.lba_start);
     }
-    
+
     pub fn getEndLba(self: *const GptEntry) u64 {
         return std.mem.littleToNative(u64, self.lba_end);
     }
-    
+
     pub fn getSize(self: *const GptEntry) u64 {
         const start = self.getStartLba();
         const end = self.getEndLba();
@@ -137,24 +129,24 @@ pub const GptEntry = extern struct {
         }
         return 0;
     }
-    
+
     pub fn setLbaRange(self: *GptEntry, start: u64, end: u64) void {
         self.lba_start = std.mem.nativeToLittle(u64, start);
         self.lba_end = std.mem.nativeToLittle(u64, end);
     }
-    
+
     pub fn setSize(self: *GptEntry, start: u64, size: u64) void {
         if (size > 0) {
             self.setLbaRange(start, start + size - 1);
         }
     }
-    
+
     pub fn getName(self: *const GptEntry, allocator: Allocator) ![]const u8 {
         // Simple conversion from UTF-16 to UTF-8
         // Find null terminator
         var len: usize = 0;
         while (len < self.name.len and self.name[len] != 0) : (len += 1) {}
-        
+
         // Allocate buffer for name
         var result = try allocator.alloc(u8, len);
         for (self.name[0..len], 0..) |char, i| {
@@ -163,7 +155,7 @@ pub const GptEntry = extern struct {
         }
         return result;
     }
-    
+
     pub fn setName(self: *GptEntry, name: []const u8) !void {
         // Convert UTF-8 to UTF-16
         const utf16_len = try std.unicode.utf8ToUtf16Le(&self.name, name);
@@ -209,44 +201,44 @@ pub const GptHeader = extern struct {
             .reserved2 = std.mem.zeroes([420]u8),
         };
     }
-    
+
     pub fn isValid(self: *const GptHeader) bool {
         const signature = std.mem.littleToNative(u64, self.signature);
         return signature == GPT_HEADER_SIGNATURE;
     }
-    
+
     pub fn getRevision(self: *const GptHeader) u32 {
         return std.mem.littleToNative(u32, self.revision);
     }
-    
+
     pub fn getHeaderSize(self: *const GptHeader) u32 {
         return std.mem.littleToNative(u32, self.header_size);
     }
-    
+
     pub fn getNumPartitions(self: *const GptHeader) u32 {
         return std.mem.littleToNative(u32, self.num_partition_entries);
     }
-    
+
     pub fn getPartitionEntrySize(self: *const GptHeader) u32 {
         return std.mem.littleToNative(u32, self.sizeof_partition_entry);
     }
-    
+
     pub fn getPartitionLba(self: *const GptHeader) u64 {
         return std.mem.littleToNative(u64, self.partition_entry_lba);
     }
-    
+
     pub fn getFirstUsableLba(self: *const GptHeader) u64 {
         return std.mem.littleToNative(u64, self.first_usable_lba);
     }
-    
+
     pub fn getLastUsableLba(self: *const GptHeader) u64 {
         return std.mem.littleToNative(u64, self.last_usable_lba);
     }
-    
+
     pub fn getMyLba(self: *const GptHeader) u64 {
         return std.mem.littleToNative(u64, self.my_lba);
     }
-    
+
     pub fn getAlternateLba(self: *const GptHeader) u64 {
         return std.mem.littleToNative(u64, self.alternate_lba);
     }
