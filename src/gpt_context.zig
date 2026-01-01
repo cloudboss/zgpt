@@ -14,7 +14,10 @@ pub const GptContext = struct {
     const Self = @This();
 
     pub fn init(allocator: Allocator, device_path: []const u8) !Self {
-        const file = try std.fs.openFileAbsolute(device_path, .{ .mode = .read_write });
+        const file = if (std.fs.path.isAbsolute(device_path))
+            try std.fs.openFileAbsolute(device_path, .{ .mode = .read_write })
+        else
+            try std.fs.cwd().openFile(device_path, .{ .mode = .read_write });
 
         // Get device size
         const stat = try file.stat();

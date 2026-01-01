@@ -99,6 +99,20 @@ pub const Guid = extern struct {
 
         return std.fmt.bufPrint(buffer, "{X:0>8}-{X:0>4}-{X:0>4}-{X:0>2}{X:0>2}-{X:0>2}{X:0>2}{X:0>2}{X:0>2}{X:0>2}{X:0>2}", .{ self.time_low, self.time_mid, self.time_hi_and_version, self.clock_seq_hi, self.clock_seq_low, self.node[0], self.node[1], self.node[2], self.node[3], self.node[4], self.node[5] });
     }
+
+    pub fn random() Guid {
+        var rng = std.Random.DefaultPrng.init(@as(u64, @truncate(@as(u128, @bitCast(std.time.nanoTimestamp())))));
+        var node: [6]u8 = undefined;
+        rng.random().bytes(&node);
+        return Guid{
+            .time_low = rng.random().int(u32),
+            .time_mid = rng.random().int(u16),
+            .time_hi_and_version = rng.random().int(u16),
+            .clock_seq_hi = rng.random().int(u8),
+            .clock_seq_low = rng.random().int(u8),
+            .node = node,
+        };
+    }
 };
 
 pub const GptEntry = extern struct {

@@ -41,6 +41,63 @@ pub fn build(b: *std.Build) void {
         .target = target,
     });
 
+    // Add test image generator executable
+    const test_generator_exe = b.addExecutable(.{
+        .name = "test_generator",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/generators/test_image_builder.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "zgpt", .module = mod },
+            },
+        }),
+    });
+    b.installArtifact(test_generator_exe);
+
+    // Add test image generator step
+    const test_gen_cmd = b.addRunArtifact(test_generator_exe);
+    const gen_test_images_step = b.step("gen-test-images", "Generate test images");
+    gen_test_images_step.dependOn(&test_gen_cmd.step);
+
+    // Create test runner for unit tests
+    const unit_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/unit/gpt_test.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "zgpt", .module = mod },
+            },
+        }),
+    });
+
+    const resize_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/unit/resize_test.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "zgpt", .module = mod },
+            },
+        }),
+    });
+
+    const integration_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/unit/integration_test.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "zgpt", .module = mod },
+            },
+        }),
+    });
+
+    const run_unit_tests = b.addRunArtifact(unit_tests);
+    const run_resize_tests = b.addRunArtifact(resize_tests);
+    const run_integration_tests = b.addRunArtifact(integration_tests);
+
     // Here we define an executable. An executable needs to have a root module
     // which needs to expose a `main` function. While we could add a main function
     // to the module defined above, it's sometimes preferable to split business
@@ -139,8 +196,12 @@ pub fn build(b: *std.Build) void {
     // times and since the two run steps do not depend on one another, this will
     // make the two of them run in parallel.
     const test_step = b.step("test", "Run tests");
+    test_step.dependOn(gen_test_images_step); // Generate test images first
     test_step.dependOn(&run_mod_tests.step);
     test_step.dependOn(&run_exe_tests.step);
+    test_step.dependOn(&run_unit_tests.step);
+    test_step.dependOn(&run_resize_tests.step);
+    test_step.dependOn(&run_integration_tests.step);
 
     // Just like flags, top level steps are also listed in the `--help` menu.
     //
