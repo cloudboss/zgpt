@@ -27,8 +27,8 @@ test "integration: load, resize, save, reload" {
         var initial_info_copy = initial_info.?;
         initial_info_copy.deinit(allocator);
 
-        // Resize partition 2 to 15MB
-        try gpt.resizePartitionByNumber(2, 15);
+        // Resize partition 2 to 6MB (fits in available space)
+        try gpt.resizePartitionByNumber(2, 6);
 
         // Save changes
         try gpt.save();
@@ -52,8 +52,8 @@ test "integration: load, resize, save, reload" {
         const reloaded_info = try gpt.getPartitionInfo(2);
         try testing.expect(reloaded_info != null);
 
-        // Size should be approximately 15MB (in sectors)
-        const expected_sectors = (15 * 1024 * 1024) / 512;
+        // Size should be approximately 6MB (in sectors)
+        const expected_sectors = (6 * 1024 * 1024) / 512;
         try testing.expect(@abs(@as(i64, @intCast(reloaded_info.?.size_sectors)) - @as(i64, @intCast(expected_sectors))) < 100);
 
         var reloaded_info_copy = reloaded_info.?;
@@ -85,7 +85,7 @@ test "integration: multiple resize operations" {
     try testing.expect(initial_count >= 2);
 
     // Resize multiple partitions
-    try gpt.resizePartitionByNumber(2, 8); // Resize root to 8MB
+    try gpt.resizePartitionByNumber(2, 5); // Resize root to 5MB
     try gpt.resizePartitionToMax(4); // Resize home to max
 
     // Verify all partitions still exist

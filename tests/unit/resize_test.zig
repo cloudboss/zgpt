@@ -25,8 +25,8 @@ test "resize partition to larger size" {
     var initial_info_copy = initial_info.?;
     initial_info_copy.deinit(allocator);
 
-    // Resize partition 2 to 20MB
-    try gpt.resizePartitionByNumber(2, 20);
+    // Resize partition 2 to 6MB (fits in available space)
+    try gpt.resizePartitionByNumber(2, 6);
 
     // Verify the resize
     const new_info = try gpt.getPartitionInfo(2);

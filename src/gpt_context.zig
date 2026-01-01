@@ -50,7 +50,10 @@ pub const GptContext = struct {
             return error.InvalidBufferSize;
         }
         try self.seekToLba(lba);
-        _ = try self.device_file.readAll(buffer);
+        const bytes_read = try self.device_file.readAll(buffer);
+        if (bytes_read < buffer.len) {
+            return error.InputOutput;
+        }
     }
 
     fn writeSector(self: *Self, lba: u64, data: []const u8) !void {
@@ -176,6 +179,7 @@ pub const GptContext = struct {
 
         // Parse partition entries
         const entries = try self.allocator.alloc(gpt_types.GptEntry, num_entries);
+        errdefer self.allocator.free(entries);
         var i: u32 = 0;
         while (i < num_entries) : (i += 1) {
             const entry_offset = i * entry_size;
@@ -284,10 +288,14 @@ pub const GptContext = struct {
     pub fn getPartition(self: *Self, partition_num: u32) ?*gpt_types.GptEntry {
         if (self.partition_entries == null) return null;
 
-        const entries = self.partition_entries.?;
-        if (partition_num >= entries.len) return null;
+        // Convert 1-based partition number to 0-based array index
+        if (partition_num == 0) return null;
+        const index = partition_num - 1;
 
-        const entry = &entries[partition_num];
+        const entries = self.partition_entries.?;
+        if (index >= entries.len) return null;
+
+        const entry = &entries[index];
         return if (entry.isEmpty()) null else entry;
     }
 

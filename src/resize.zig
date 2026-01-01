@@ -65,10 +65,11 @@ pub fn resizePartition(context: *GptContext, operation: ResizeOperation, constra
 
     const new_end = if (operation.new_end_sector) |end|
         end
-    else if (operation.new_size_sectors) |size|
-        current_start + size - 1
-    else
-        return ResizeError.InvalidSize;
+    else if (operation.new_size_sectors) |size| blk: {
+        // Validate size before calculation to prevent underflow
+        if (size == 0) return ResizeError.InvalidSize;
+        break :blk current_start + size - 1;
+    } else return ResizeError.InvalidSize;
 
     const new_size = new_end - current_start + 1;
 
@@ -93,7 +94,7 @@ pub fn resizePartition(context: *GptContext, operation: ResizeOperation, constra
     }
 
     // Check for overlaps with other partitions
-    try checkForOverlaps(context, operation.partition_number, current_start, new_end);
+    try checkForOverlaps(context, operation.partition_number - 1, current_start, new_end);
 
     // Perform the resize
     partition.setLbaRange(current_start, new_end);
@@ -124,9 +125,10 @@ pub fn findNextPartitionStart(context: *GptContext, after_partition: u32) !?u64 
     const target_end = target_partition.getEndLba();
 
     var next_start: ?u64 = null;
+    const target_index = after_partition - 1;
 
     for (entries, 0..) |*entry, i| {
-        if (i == after_partition or entry.isEmpty()) continue;
+        if (i == target_index or entry.isEmpty()) continue;
 
         const entry_start = entry.getStartLba();
         if (entry_start > target_end) {
@@ -234,7 +236,7 @@ pub fn listPartitions(context: *GptContext, allocator: Allocator) ![]PartitionIn
     for (entries, 0..) |*entry, i| {
         if (entry.isEmpty()) continue;
 
-        if (try getPartitionInfo(context, @as(u32, @intCast(i)), allocator)) |info| {
+        if (try getPartitionInfo(context, @as(u32, @intCast(i + 1)), allocator)) |info| {
             partitions[index] = info;
             index += 1;
         }
