@@ -41,6 +41,20 @@ pub fn build(b: *std.Build) void {
         .target = target,
     });
 
+    const lib = b.addLibrary(.{
+        .name = "zgpt",
+        .linkage = .static,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/root.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "zgpt", .module = mod },
+            },
+        }),
+    });
+    b.installArtifact(lib);
+
     // Add test image generator executable
     const test_generator_exe = b.addExecutable(.{
         .name = "test_generator",
