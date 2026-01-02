@@ -1,3 +1,7 @@
+//
+// Copyright (C) 2026 Joseph Wright <joseph@cloudboss.co>
+//
+
 const std = @import("std");
 
 // Although this function looks imperative, it does not perform the build

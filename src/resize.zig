@@ -1,3 +1,7 @@
+//
+// Copyright (C) 2026 Joseph Wright <joseph@cloudboss.co>
+//
+
 const std = @import("std");
 const gpt_types = @import("gpt.zig");
 const GptContext = @import("gpt_context.zig").GptContext;

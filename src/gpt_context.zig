@@ -1,3 +1,7 @@
+//
+// Copyright (C) 2026 Joseph Wright <joseph@cloudboss.co>
+//
+
 const std = @import("std");
 const gpt_types = @import("gpt.zig");
 const Allocator = std.mem.Allocator;

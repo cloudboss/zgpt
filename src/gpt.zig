@@ -1,3 +1,7 @@
+//
+// Copyright (C) 2026 Joseph Wright <joseph@cloudboss.co>
+//
+
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
