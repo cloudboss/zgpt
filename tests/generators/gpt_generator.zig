@@ -50,6 +50,7 @@ pub const GptImageBuilder = struct {
     total_sectors: u64,
     partitions: [128]?gpt_types.GptEntry,
     partition_count: u32,
+    disk_guid: gpt_types.Guid,
 
     pub fn init(allocator: std.mem.Allocator, size_mb: u64) !GptImageBuilder {
         const sector_size = 512;
@@ -61,6 +62,7 @@ pub const GptImageBuilder = struct {
             .total_sectors = total_sectors,
             .partitions = [_]?gpt_types.GptEntry{null} ** 128,
             .partition_count = 0,
+            .disk_guid = gpt_types.Guid.random(),
         };
     }
 
@@ -160,7 +162,7 @@ pub const GptImageBuilder = struct {
 
         header.first_usable_lba = std.mem.nativeToLittle(u64, 34); // After GPT data
         header.last_usable_lba = std.mem.nativeToLittle(u64, self.total_sectors - 34); // Before backup GPT
-        header.disk_guid = gpt_types.Guid.random();
+        header.disk_guid = self.disk_guid;
         header.num_partition_entries = std.mem.nativeToLittle(u32, gpt_types.GPT_NPARTITIONS_DEFAULT);
         header.sizeof_partition_entry = std.mem.nativeToLittle(u32, @sizeOf(gpt_types.GptEntry));
 
@@ -181,7 +183,8 @@ pub const GptImageBuilder = struct {
         const partition_crc = std.hash.Crc32.hash(entries_data);
         header.partition_entry_array_crc32 = std.mem.nativeToLittle(u32, partition_crc);
 
-        // Calculate header CRC32
+        // Calculate header CRC32 (header_crc32 field must be zero during calculation)
+        header.header_crc32 = 0;
         const header_crc = std.hash.Crc32.hash(sector[0..gpt_types.GPT_HEADER_MINSZ]);
         header.header_crc32 = std.mem.nativeToLittle(u32, header_crc);
     }

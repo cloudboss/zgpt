@@ -98,6 +98,11 @@ pub fn build(b: *std.Build) void {
     const run_resize_tests = b.addRunArtifact(resize_tests);
     const run_integration_tests = b.addRunArtifact(integration_tests);
 
+    // Make sure test images are generated before running tests
+    run_unit_tests.step.dependOn(&test_gen_cmd.step);
+    run_resize_tests.step.dependOn(&test_gen_cmd.step);
+    run_integration_tests.step.dependOn(&test_gen_cmd.step);
+
     // Here we define an executable. An executable needs to have a root module
     // which needs to expose a `main` function. While we could add a main function
     // to the module defined above, it's sometimes preferable to split business

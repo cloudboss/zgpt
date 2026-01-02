@@ -74,7 +74,7 @@ pub fn createFullDiskGpt(allocator: std.mem.Allocator, output_path: []const u8) 
     defer builder.deinit();
 
     // Single partition using entire available space
-    try builder.addPartition(LINUX_FILESYSTEM_GUID, 34, 10206, "Full disk");
+    try builder.addPartition(LINUX_FILESYSTEM_GUID, 34, 10205, "Full disk");
 
     var image = try builder.build();
     defer image.deinit();
@@ -87,7 +87,7 @@ pub fn createMinimalGpt(allocator: std.mem.Allocator, output_path: []const u8) !
     defer builder.deinit();
 
     // Tiny partition
-    try builder.addPartition(LINUX_FILESYSTEM_GUID, 34, 100, "Tiny");
+    try builder.addPartition(LINUX_FILESYSTEM_GUID, 34, 101, "Tiny");
 
     var image = try builder.build();
     defer image.deinit();
