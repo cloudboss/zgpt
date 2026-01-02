@@ -1,0 +1,16 @@
+# Zig build artifacts
+zig-out/
+zig-cache/
+.zig-cache/
+
+# Test data (generated automatically)
+tests/data/
+
+# Editor files
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
