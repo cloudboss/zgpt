@@ -91,7 +91,7 @@ try zgpt.resize.resizePartition(&context, operation, constraints);
 ### Core Modules
 
 - **`gpt.zig`**: Core GPT data structures (Guid, GptHeader, GptEntry)
-- **`gpt_context.zig`**: GPT device context and I/O operations
+- **`GptContext.zig`**: GPT device context and I/O operations
 - **`resize.zig`**: Partition resizing functionality
 - **`root.zig`**: Main library interface
 
