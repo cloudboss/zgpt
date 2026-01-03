@@ -4,7 +4,7 @@
 
 const std = @import("std");
 const gpt_types = @import("gpt.zig");
-const GptContext = @import("gpt_context.zig").GptContext;
+const GptContext = @import("GptContext.zig");
 const Allocator = std.mem.Allocator;
 
 pub const ResizeOperation = struct {

@@ -6,7 +6,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 
 pub const gpt = @import("gpt.zig");
-pub const GptContext = @import("gpt_context.zig").GptContext;
+pub const GptContext = @import("GptContext.zig");
 pub const resize = @import("resize.zig");
 
 pub const ZGptError = error{
