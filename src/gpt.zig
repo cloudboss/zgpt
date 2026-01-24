@@ -53,6 +53,43 @@ pub const GPT_PRIMARY_PARTITION_TABLE_LBA: u64 = 1;
 pub const GPT_PART_NAME_LEN: usize = 36; // 72 bytes / 2
 pub const GPT_NPARTITIONS_DEFAULT: u32 = 128;
 
+// MBR constants
+pub const MBR_SIGNATURE: u16 = 0xAA55;
+pub const MBR_BOOT_CODE_SIZE: usize = 446;
+pub const EFI_PMBR_OSTYPE: u8 = 0xEE;
+
+/// Create a protective MBR for GPT.
+/// The protective MBR contains a single partition of type 0xEE (GPT protective)
+/// that spans the entire disk, preventing MBR-only tools from misinterpreting
+/// the disk as unpartitioned.
+pub fn createProtectiveMbr(total_sectors: u64) [512]u8 {
+    var sector = [_]u8{0} ** 512;
+
+    // MBR signature at bytes 510-511
+    sector[510] = @truncate(MBR_SIGNATURE & 0xFF);
+    sector[511] = @truncate((MBR_SIGNATURE >> 8) & 0xFF);
+
+    // First partition entry at offset 446 (16 bytes)
+    const p = sector[446..462];
+    p[0] = 0x00; // Boot indicator (not bootable)
+    p[1] = 0x00; // Start head
+    p[2] = 0x02; // Start sector (1-based in CHS)
+    p[3] = 0x00; // Start cylinder
+    p[4] = EFI_PMBR_OSTYPE; // OS type (0xEE = GPT protective)
+    p[5] = 0xFF; // End head
+    p[6] = 0xFF; // End sector
+    p[7] = 0xFF; // End cylinder
+
+    // Starting LBA (little-endian u32) = 1
+    std.mem.writeInt(u32, p[8..12], 1, .little);
+
+    // Size in LBA (little-endian u32) = min(total_sectors - 1, 0xFFFFFFFF)
+    const size_in_lba: u32 = @truncate(@min(total_sectors -| 1, 0xFFFFFFFF));
+    std.mem.writeInt(u32, p[12..16], size_in_lba, .little);
+
+    return sector;
+}
+
 pub const Guid = extern struct {
     time_low: u32,
     time_mid: u16,

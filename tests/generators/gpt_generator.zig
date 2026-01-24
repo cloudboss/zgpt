@@ -87,7 +87,8 @@ pub const GptImageBuilder = struct {
         @memset(data, 0);
 
         // Create protective MBR at sector 0
-        try self.createProtectiveMbr(data[0..self.sector_size]);
+        const mbr = gpt_types.createProtectiveMbr(self.total_sectors);
+        @memcpy(data[0..512], &mbr);
 
         // Create primary GPT header at sector 1
         const primary_header_offset = self.sector_size;
@@ -115,32 +116,6 @@ pub const GptImageBuilder = struct {
             .sector_size = self.sector_size,
             .allocator = self.allocator,
         };
-    }
-
-    fn createProtectiveMbr(self: *GptImageBuilder, sector: []u8) !void {
-        @memset(sector, 0);
-
-        // MBR signature
-        sector[510] = 0x55;
-        sector[511] = 0xAA;
-
-        // Single protective partition entry
-        const partition_entry_offset = 446;
-        sector[partition_entry_offset] = 0x00; // Non-bootable
-        sector[partition_entry_offset + 1] = 0x00; // Start head
-        sector[partition_entry_offset + 2] = 0x02; // Start sector
-        sector[partition_entry_offset + 3] = 0x00; // Start cylinder
-        sector[partition_entry_offset + 4] = 0xEE; // GPT protective type
-        sector[partition_entry_offset + 5] = 0xFF; // End head
-        sector[partition_entry_offset + 6] = 0xFF; // End sector
-        sector[partition_entry_offset + 7] = 0xFF; // End cylinder
-
-        // Start LBA (little endian)
-        std.mem.writeInt(u32, sector[partition_entry_offset + 8 .. partition_entry_offset + 12], 1, .little);
-
-        // Size in sectors (little endian)
-        const max_mbr_sectors = if (self.total_sectors > 0xFFFFFFFF) 0xFFFFFFFF else @as(u32, @truncate(self.total_sectors - 1));
-        std.mem.writeInt(u32, sector[partition_entry_offset + 12 .. partition_entry_offset + 16], max_mbr_sectors, .little);
     }
 
     fn createGptHeader(self: *GptImageBuilder, sector: []u8, is_primary: bool) !void {
