@@ -7,7 +7,8 @@ const gpt = @import("gpt.zig");
 const Allocator = std.mem.Allocator;
 
 allocator: Allocator,
-device_file: std.fs.File,
+io: std.Io,
+device_file: std.Io.File,
 sector_size: u32,
 device_size: u64,
 primary_header: ?gpt.GptHeader,
@@ -16,18 +17,19 @@ partition_entries: ?[]gpt.GptEntry,
 
 const Self = @This();
 
-pub fn init(allocator: Allocator, device_path: []const u8) !Self {
+pub fn init(allocator: Allocator, io: std.Io, device_path: []const u8) !Self {
     const file = if (std.fs.path.isAbsolute(device_path))
-        try std.fs.openFileAbsolute(device_path, .{ .mode = .read_write })
+        try std.Io.Dir.openFileAbsolute(io, device_path, .{ .mode = .read_write })
     else
-        try std.fs.cwd().openFile(device_path, .{ .mode = .read_write });
+        try std.Io.Dir.cwd().openFile(io, device_path, .{ .mode = .read_write });
 
     // Get device size
-    const stat = try file.stat();
-    const device_size = stat.size;
+    const file_stat = try file.stat(io);
+    const device_size = file_stat.size;
 
     return Self{
         .allocator = allocator,
+        .io = io,
         .device_file = file,
         .sector_size = 512, // Standard sector size
         .device_size = device_size,
@@ -41,20 +43,16 @@ pub fn deinit(self: *Self) void {
     if (self.partition_entries) |entries| {
         self.allocator.free(entries);
     }
-    self.device_file.close();
-}
-
-fn seekToLba(self: *Self, lba: u64) !void {
-    try self.device_file.seekTo(lba * self.sector_size);
+    self.device_file.close(self.io);
 }
 
 fn readSector(self: *Self, lba: u64, buffer: []u8) !void {
     if (buffer.len != self.sector_size) {
         return error.InvalidBufferSize;
     }
-    try self.seekToLba(lba);
-    const bytes_read = try self.device_file.readAll(buffer);
-    if (bytes_read < buffer.len) {
+    const offset = lba * self.sector_size;
+    const n = try self.device_file.readPositionalAll(self.io, buffer, offset);
+    if (n < buffer.len) {
         return error.InputOutput;
     }
 }
@@ -63,8 +61,8 @@ fn writeSector(self: *Self, lba: u64, data: []const u8) !void {
     if (data.len != self.sector_size) {
         return error.InvalidBufferSize;
     }
-    try self.seekToLba(lba);
-    try self.device_file.writeAll(data);
+    const offset = lba * self.sector_size;
+    try self.device_file.writePositionalAll(self.io, data, offset);
 }
 
 fn calculateCrc32(data: []const u8) u32 {
@@ -285,7 +283,7 @@ pub fn save(self: *Self) !void {
     try self.writePartitionEntries();
     try self.writePrimaryHeader();
     try self.writeBackupHeader();
-    try self.device_file.sync();
+    try self.device_file.sync(self.io);
 }
 
 pub fn getPartition(self: *Self, partition_num: u32) ?*gpt.GptEntry {

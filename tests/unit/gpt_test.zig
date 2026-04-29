@@ -7,11 +7,10 @@ const testing = std.testing;
 const zgpt = @import("zgpt");
 
 test "load basic GPT image" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
-    var gpt = try zgpt.ZGpt.init(allocator, "tests/data/valid/basic_gpt.img");
+    var gpt = try zgpt.ZGpt.init(allocator, io, "tests/data/valid/basic_gpt.img");
     defer gpt.deinit();
 
     try gpt.load();
@@ -25,11 +24,10 @@ test "load basic GPT image" {
 }
 
 test "load complex GPT image" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
-    var gpt = try zgpt.ZGpt.init(allocator, "tests/data/valid/complex_gpt.img");
+    var gpt = try zgpt.ZGpt.init(allocator, io, "tests/data/valid/complex_gpt.img");
     defer gpt.deinit();
 
     try gpt.load();
@@ -48,11 +46,10 @@ test "load complex GPT image" {
 }
 
 test "load empty GPT table" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
-    var gpt = try zgpt.ZGpt.init(allocator, "tests/data/edge_cases/empty_table.img");
+    var gpt = try zgpt.ZGpt.init(allocator, io, "tests/data/edge_cases/empty_table.img");
     defer gpt.deinit();
 
     try gpt.load();
@@ -64,11 +61,10 @@ test "load empty GPT table" {
 }
 
 test "load full disk GPT" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
-    var gpt = try zgpt.ZGpt.init(allocator, "tests/data/valid/full_disk.img");
+    var gpt = try zgpt.ZGpt.init(allocator, io, "tests/data/valid/full_disk.img");
     defer gpt.deinit();
 
     try gpt.load();
@@ -81,44 +77,40 @@ test "load full disk GPT" {
 }
 
 test "load corrupted header" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
-    var gpt = try zgpt.ZGpt.init(allocator, "tests/data/invalid/corrupted_header.img");
+    var gpt = try zgpt.ZGpt.init(allocator, io, "tests/data/invalid/corrupted_header.img");
     defer gpt.deinit();
 
     try testing.expectError(error.InvalidCrc32, gpt.load());
 }
 
 test "load invalid signature" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
-    var gpt = try zgpt.ZGpt.init(allocator, "tests/data/invalid/invalid_signature.img");
+    var gpt = try zgpt.ZGpt.init(allocator, io, "tests/data/invalid/invalid_signature.img");
     defer gpt.deinit();
 
     try testing.expectError(error.InvalidSignature, gpt.load());
 }
 
 test "load truncated image" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
-    var gpt = try zgpt.ZGpt.init(allocator, "tests/data/invalid/truncated.img");
+    var gpt = try zgpt.ZGpt.init(allocator, io, "tests/data/invalid/truncated.img");
     defer gpt.deinit();
 
     try testing.expectError(error.InputOutput, gpt.load());
 }
 
 test "partition info retrieval" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
-    var gpt = try zgpt.ZGpt.init(allocator, "tests/data/valid/basic_gpt.img");
+    var gpt = try zgpt.ZGpt.init(allocator, io, "tests/data/valid/basic_gpt.img");
     defer gpt.deinit();
 
     try gpt.load();

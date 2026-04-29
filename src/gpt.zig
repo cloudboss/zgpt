@@ -43,6 +43,20 @@ pub const GptError = error{
     NotOpenForWriting,
     MessageTooBig,
     InvalidState,
+    PipeBusy,
+    NetworkNotFound,
+    AntivirusInterference,
+    SymLinkLoop,
+    ProcessFdQuotaExceeded,
+    SystemFdQuotaExceeded,
+    FileNotFound,
+    NotDir,
+    PathAlreadyExists,
+    ReadOnlyFileSystem,
+    FileLocksUnsupported,
+    FileBusy,
+    Streaming,
+    NonResizable,
 };
 
 pub const GPT_HEADER_SIGNATURE: u64 = 0x5452415020494645; // "EFI PART"
@@ -142,16 +156,15 @@ pub const Guid = extern struct {
     }
 
     pub fn random() Guid {
-        var rng = std.Random.DefaultPrng.init(@as(u64, @truncate(@as(u128, @bitCast(std.time.nanoTimestamp())))));
-        var node: [6]u8 = undefined;
-        rng.random().bytes(&node);
+        var bytes: [16]u8 = undefined;
+        _ = std.os.linux.getrandom(&bytes, bytes.len, 0);
         return Guid{
-            .time_low = rng.random().int(u32),
-            .time_mid = rng.random().int(u16),
-            .time_hi_and_version = rng.random().int(u16),
-            .clock_seq_hi = rng.random().int(u8),
-            .clock_seq_low = rng.random().int(u8),
-            .node = node,
+            .time_low = std.mem.readInt(u32, bytes[0..4], .little),
+            .time_mid = std.mem.readInt(u16, bytes[4..6], .little),
+            .time_hi_and_version = std.mem.readInt(u16, bytes[6..8], .little),
+            .clock_seq_hi = bytes[8],
+            .clock_seq_low = bytes[9],
+            .node = bytes[10..16].*,
         };
     }
 };

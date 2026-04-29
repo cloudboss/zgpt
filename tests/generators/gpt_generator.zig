@@ -16,15 +16,15 @@ pub const TestGptImage = struct {
         self.allocator.free(self.data);
     }
 
-    pub fn writeToFile(self: *const TestGptImage, path: []const u8) !void {
+    pub fn writeToFile(self: *const TestGptImage, io: std.Io, path: []const u8) !void {
         // Create parent directories if they don't exist
         if (std.fs.path.dirname(path)) |dir_path| {
-            try std.fs.cwd().makePath(dir_path);
+            try std.Io.Dir.cwd().createDirPath(io, dir_path);
         }
 
-        const file = try std.fs.cwd().createFile(path, .{});
-        defer file.close();
-        try file.writeAll(self.data);
+        const file = try std.Io.Dir.cwd().createFile(io, path, .{});
+        defer file.close(io);
+        try file.writePositionalAll(io, self.data, 0);
     }
 };
 

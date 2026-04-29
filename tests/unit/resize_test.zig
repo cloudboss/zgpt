@@ -7,17 +7,16 @@ const testing = std.testing;
 const zgpt = @import("zgpt");
 
 test "resize partition to larger size" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     // Copy test image to temporary location for modification
     const temp_path = "tests/data/temp_resize_test.img";
-    defer std.fs.cwd().deleteFile(temp_path) catch {};
+    defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.fs.cwd().copyFile("tests/data/valid/complex_gpt.img", std.fs.cwd(), temp_path, .{});
+    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/complex_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
 
-    var gpt = try zgpt.ZGpt.init(allocator, temp_path);
+    var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
 
     try gpt.load();
@@ -42,17 +41,16 @@ test "resize partition to larger size" {
 }
 
 test "resize partition to maximum size" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     // Copy test image to temporary location for modification
     const temp_path = "tests/data/temp_resize_max_test.img";
-    defer std.fs.cwd().deleteFile(temp_path) catch {};
+    defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.fs.cwd().copyFile("tests/data/valid/complex_gpt.img", std.fs.cwd(), temp_path, .{});
+    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/complex_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
 
-    var gpt = try zgpt.ZGpt.init(allocator, temp_path);
+    var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
 
     try gpt.load();
@@ -77,17 +75,16 @@ test "resize partition to maximum size" {
 }
 
 test "resize partition beyond available space" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     // Copy test image to temporary location for modification
     const temp_path = "tests/data/temp_resize_overflow_test.img";
-    defer std.fs.cwd().deleteFile(temp_path) catch {};
+    defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.fs.cwd().copyFile("tests/data/valid/complex_gpt.img", std.fs.cwd(), temp_path, .{});
+    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/complex_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
 
-    var gpt = try zgpt.ZGpt.init(allocator, temp_path);
+    var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
 
     try gpt.load();
@@ -97,17 +94,16 @@ test "resize partition beyond available space" {
 }
 
 test "resize nonexistent partition" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     // Copy test image to temporary location for modification
     const temp_path = "tests/data/temp_resize_nonexistent_test.img";
-    defer std.fs.cwd().deleteFile(temp_path) catch {};
+    defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.fs.cwd().copyFile("tests/data/valid/basic_gpt.img", std.fs.cwd(), temp_path, .{});
+    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/basic_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
 
-    var gpt = try zgpt.ZGpt.init(allocator, temp_path);
+    var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
 
     try gpt.load();
@@ -117,17 +113,16 @@ test "resize nonexistent partition" {
 }
 
 test "resize single partition disk" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     // Copy test image to temporary location for modification
     const temp_path = "tests/data/temp_resize_single_test.img";
-    defer std.fs.cwd().deleteFile(temp_path) catch {};
+    defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.fs.cwd().copyFile("tests/data/valid/full_disk.img", std.fs.cwd(), temp_path, .{});
+    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/full_disk.img", std.Io.Dir.cwd(), temp_path, io, .{});
 
-    var gpt = try zgpt.ZGpt.init(allocator, temp_path);
+    var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
 
     try gpt.load();
@@ -152,17 +147,16 @@ test "resize single partition disk" {
 }
 
 test "resize with invalid size" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     // Copy test image to temporary location for modification
     const temp_path = "tests/data/temp_resize_invalid_test.img";
-    defer std.fs.cwd().deleteFile(temp_path) catch {};
+    defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.fs.cwd().copyFile("tests/data/valid/basic_gpt.img", std.fs.cwd(), temp_path, .{});
+    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/basic_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
 
-    var gpt = try zgpt.ZGpt.init(allocator, temp_path);
+    var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
 
     try gpt.load();

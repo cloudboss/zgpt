@@ -21,10 +21,10 @@ pub const ZGpt = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: Allocator, device_path: []const u8) ZGptError!Self {
-        const context = GptContext.init(allocator, device_path) catch |err| switch (err) {
+    pub fn init(allocator: Allocator, io: std.Io, device_path: []const u8) ZGptError!Self {
+        const context = GptContext.init(allocator, io, device_path) catch |err| switch (err) {
             error.FileNotFound => return ZGptError.DeviceNotFound,
-            error.AccessDenied => return ZGptError.PermissionDenied,
+            error.AccessDenied, error.PermissionDenied => return ZGptError.PermissionDenied,
             else => return ZGptError.InvalidDevice,
         };
 

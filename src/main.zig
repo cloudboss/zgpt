@@ -42,8 +42,8 @@ fn formatBytes(bytes: u64, buffer: []u8) []const u8 {
     }
 }
 
-fn listPartitions(allocator: std.mem.Allocator, device: []const u8) !void {
-    var gpt = zgpt.ZGpt.init(allocator, device) catch |err| switch (err) {
+fn listPartitions(allocator: std.mem.Allocator, io: std.Io, device: []const u8) !void {
+    var gpt = zgpt.ZGpt.init(allocator, io, device) catch |err| switch (err) {
         error.DeviceNotFound => {
             print("Error: Device '{s}' not found\n", .{device});
             return;
@@ -92,8 +92,8 @@ fn listPartitions(allocator: std.mem.Allocator, device: []const u8) !void {
     }
 }
 
-fn showPartitionInfo(allocator: std.mem.Allocator, device: []const u8, partition_num: u32) !void {
-    var gpt = zgpt.ZGpt.init(allocator, device) catch |err| switch (err) {
+fn showPartitionInfo(allocator: std.mem.Allocator, io: std.Io, device: []const u8, partition_num: u32) !void {
+    var gpt = zgpt.ZGpt.init(allocator, io, device) catch |err| switch (err) {
         error.DeviceNotFound => {
             print("Error: Device '{s}' not found\n", .{device});
             return;
@@ -143,10 +143,10 @@ fn showPartitionInfo(allocator: std.mem.Allocator, device: []const u8, partition
     }
 }
 
-fn resizePartition(allocator: std.mem.Allocator, device: []const u8, partition_num: u32, size_mb: u64) !void {
+fn resizePartition(allocator: std.mem.Allocator, io: std.Io, device: []const u8, partition_num: u32, size_mb: u64) !void {
     print("Resizing partition {} on device '{s}' to {} MB...\n", .{ partition_num, device, size_mb });
 
-    var gpt = zgpt.ZGpt.init(allocator, device) catch |err| switch (err) {
+    var gpt = zgpt.ZGpt.init(allocator, io, device) catch |err| switch (err) {
         error.DeviceNotFound => {
             print("Error: Device '{s}' not found\n", .{device});
             return;
@@ -184,10 +184,10 @@ fn resizePartition(allocator: std.mem.Allocator, device: []const u8, partition_n
     print("Partition {} successfully resized to {} MB\n", .{ partition_num, size_mb });
 }
 
-fn resizeToMax(allocator: std.mem.Allocator, device: []const u8, partition_num: u32) !void {
+fn resizeToMax(allocator: std.mem.Allocator, io: std.Io, device: []const u8, partition_num: u32) !void {
     print("Resizing partition {} on device '{s}' to maximum available space...\n", .{ partition_num, device });
 
-    var gpt = zgpt.ZGpt.init(allocator, device) catch |err| switch (err) {
+    var gpt = zgpt.ZGpt.init(allocator, io, device) catch |err| switch (err) {
         error.DeviceNotFound => {
             print("Error: Device '{s}' not found\n", .{device});
             return;
@@ -221,68 +221,73 @@ fn resizeToMax(allocator: std.mem.Allocator, device: []const u8, partition_num: 
     print("Partition {} successfully resized to maximum available space\n", .{partition_num});
 }
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+pub fn main(init: std.process.Init) !void {
+    const allocator = init.gpa;
+    const io = init.io;
 
-    const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
+    var args_iter = try std.process.Args.Iterator.initAllocator(init.minimal.args, allocator);
+    defer args_iter.deinit();
 
-    if (args.len < 3) {
+    var argv: std.ArrayList([]const u8) = .empty;
+    defer argv.deinit(allocator);
+    while (args_iter.next()) |arg| {
+        try argv.append(allocator, arg);
+    }
+
+    if (argv.items.len < 3) {
         printUsage();
         std.process.exit(1);
     }
 
-    const command = args[1];
-    const device = args[2];
+    const command = argv.items[1];
+    const device = argv.items[2];
 
     if (std.mem.eql(u8, command, "list")) {
-        try listPartitions(allocator, device);
+        try listPartitions(allocator, io, device);
     } else if (std.mem.eql(u8, command, "info")) {
-        if (args.len < 4) {
+        if (argv.items.len < 4) {
             print("Error: partition number required for 'info' command\n", .{});
             printUsage();
             std.process.exit(1);
         }
 
-        const partition_num = std.fmt.parseInt(u32, args[3], 10) catch {
-            print("Error: Invalid partition number '{s}'\n", .{args[3]});
+        const partition_num = std.fmt.parseInt(u32, argv.items[3], 10) catch {
+            print("Error: Invalid partition number '{s}'\n", .{argv.items[3]});
             std.process.exit(1);
         };
 
-        try showPartitionInfo(allocator, device, partition_num);
+        try showPartitionInfo(allocator, io, device, partition_num);
     } else if (std.mem.eql(u8, command, "resize")) {
-        if (args.len < 5) {
+        if (argv.items.len < 5) {
             print("Error: partition number and size required for 'resize' command\n", .{});
             printUsage();
             std.process.exit(1);
         }
 
-        const partition_num = std.fmt.parseInt(u32, args[3], 10) catch {
-            print("Error: Invalid partition number '{s}'\n", .{args[3]});
+        const partition_num = std.fmt.parseInt(u32, argv.items[3], 10) catch {
+            print("Error: Invalid partition number '{s}'\n", .{argv.items[3]});
             std.process.exit(1);
         };
 
-        const size_mb = std.fmt.parseInt(u64, args[4], 10) catch {
-            print("Error: Invalid size '{s}'\n", .{args[4]});
+        const size_mb = std.fmt.parseInt(u64, argv.items[4], 10) catch {
+            print("Error: Invalid size '{s}'\n", .{argv.items[4]});
             std.process.exit(1);
         };
 
-        try resizePartition(allocator, device, partition_num, size_mb);
+        try resizePartition(allocator, io, device, partition_num, size_mb);
     } else if (std.mem.eql(u8, command, "resize-max")) {
-        if (args.len < 4) {
+        if (argv.items.len < 4) {
             print("Error: partition number required for 'resize-max' command\n", .{});
             printUsage();
             std.process.exit(1);
         }
 
-        const partition_num = std.fmt.parseInt(u32, args[3], 10) catch {
-            print("Error: Invalid partition number '{s}'\n", .{args[3]});
+        const partition_num = std.fmt.parseInt(u32, argv.items[3], 10) catch {
+            print("Error: Invalid partition number '{s}'\n", .{argv.items[3]});
             std.process.exit(1);
         };
 
-        try resizeToMax(allocator, device, partition_num);
+        try resizeToMax(allocator, io, device, partition_num);
     } else {
         print("Error: Unknown command '{s}'\n", .{command});
         printUsage();

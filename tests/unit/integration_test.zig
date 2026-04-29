@@ -7,19 +7,18 @@ const testing = std.testing;
 const zgpt = @import("zgpt");
 
 test "integration: load, resize, save, reload" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     // Copy test image to temporary location for modification
     const temp_path = "tests/data/temp_integration_test.img";
-    defer std.fs.cwd().deleteFile(temp_path) catch {};
+    defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.fs.cwd().copyFile("tests/data/valid/complex_gpt.img", std.fs.cwd(), temp_path, .{});
+    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/complex_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
 
     // First pass: load and resize
     {
-        var gpt = try zgpt.ZGpt.init(allocator, temp_path);
+        var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
         defer gpt.deinit();
 
         try gpt.load();
@@ -48,7 +47,7 @@ test "integration: load, resize, save, reload" {
 
     // Second pass: reload and verify persistence
     {
-        var gpt = try zgpt.ZGpt.init(allocator, temp_path);
+        var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
         defer gpt.deinit();
 
         try gpt.load();
@@ -66,17 +65,16 @@ test "integration: load, resize, save, reload" {
 }
 
 test "integration: multiple resize operations" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     // Copy test image to temporary location for modification
     const temp_path = "tests/data/temp_multi_resize_test.img";
-    defer std.fs.cwd().deleteFile(temp_path) catch {};
+    defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.fs.cwd().copyFile("tests/data/valid/complex_gpt.img", std.fs.cwd(), temp_path, .{});
+    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/complex_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
 
-    var gpt = try zgpt.ZGpt.init(allocator, temp_path);
+    var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
 
     try gpt.load();
@@ -103,11 +101,10 @@ test "integration: multiple resize operations" {
 }
 
 test "integration: edge case with minimal disk" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
-    var gpt = try zgpt.ZGpt.init(allocator, "tests/data/valid/minimal_gpt.img");
+    var gpt = try zgpt.ZGpt.init(allocator, io, "tests/data/valid/minimal_gpt.img");
     defer gpt.deinit();
 
     try gpt.load();
@@ -121,10 +118,10 @@ test "integration: edge case with minimal disk" {
     // Should be able to resize within minimal bounds
     // Copy for modification
     const temp_path = "tests/data/temp_minimal_test.img";
-    defer std.fs.cwd().deleteFile(temp_path) catch {};
-    try std.fs.cwd().copyFile("tests/data/valid/minimal_gpt.img", std.fs.cwd(), temp_path, .{});
+    defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
+    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/minimal_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
 
-    var gpt_temp = try zgpt.ZGpt.init(allocator, temp_path);
+    var gpt_temp = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt_temp.deinit();
 
     try gpt_temp.load();
@@ -132,11 +129,10 @@ test "integration: edge case with minimal disk" {
 }
 
 test "integration: boundary partition handling" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
-    var gpt = try zgpt.ZGpt.init(allocator, "tests/data/edge_cases/boundary_partitions.img");
+    var gpt = try zgpt.ZGpt.init(allocator, io, "tests/data/edge_cases/boundary_partitions.img");
     defer gpt.deinit();
 
     try gpt.load();
@@ -155,12 +151,11 @@ test "integration: boundary partition handling" {
 }
 
 test "integration: error recovery" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     // Test with corrupted partition array
-    var gpt = try zgpt.ZGpt.init(allocator, "tests/data/invalid/corrupted_partition_array.img");
+    var gpt = try zgpt.ZGpt.init(allocator, io, "tests/data/invalid/corrupted_partition_array.img");
     defer gpt.deinit();
 
     try testing.expectError(error.InvalidCrc32, gpt.load());
@@ -170,11 +165,10 @@ test "integration: error recovery" {
 }
 
 test "integration: maximum partitions" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = testing.allocator;
+    const io = testing.io;
 
-    var gpt = try zgpt.ZGpt.init(allocator, "tests/data/edge_cases/max_partitions.img");
+    var gpt = try zgpt.ZGpt.init(allocator, io, "tests/data/edge_cases/max_partitions.img");
     defer gpt.deinit();
 
     try gpt.load();
