@@ -92,7 +92,12 @@ fn listPartitions(allocator: std.mem.Allocator, io: std.Io, device: []const u8) 
     }
 }
 
-fn showPartitionInfo(allocator: std.mem.Allocator, io: std.Io, device: []const u8, partition_num: u32) !void {
+fn showPartitionInfo(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    device: []const u8,
+    partition_num: u32,
+) !void {
     var gpt = zgpt.ZGpt.init(allocator, io, device) catch |err| switch (err) {
         error.DeviceNotFound => {
             print("Error: Device '{s}' not found\n", .{device});
@@ -143,8 +148,17 @@ fn showPartitionInfo(allocator: std.mem.Allocator, io: std.Io, device: []const u
     }
 }
 
-fn resizePartition(allocator: std.mem.Allocator, io: std.Io, device: []const u8, partition_num: u32, size_mb: u64) !void {
-    print("Resizing partition {} on device '{s}' to {} MB...\n", .{ partition_num, device, size_mb });
+fn resizePartition(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    device: []const u8,
+    partition_num: u32,
+    size_mb: u64,
+) !void {
+    print(
+        "Resizing partition {} on device '{s}' to {} MB...\n",
+        .{ partition_num, device, size_mb },
+    );
 
     var gpt = zgpt.ZGpt.init(allocator, io, device) catch |err| switch (err) {
         error.DeviceNotFound => {
@@ -172,7 +186,8 @@ fn resizePartition(allocator: std.mem.Allocator, io: std.Io, device: []const u8,
             return;
         },
         error.WouldShrink => {
-            print("Error: This operation would shrink the partition. Use explicit shrink command if intended.\n", .{});
+            print("Error: This operation would shrink the partition. " ++
+                "Use explicit shrink command if intended.\n", .{});
             return;
         },
         else => {
@@ -184,8 +199,16 @@ fn resizePartition(allocator: std.mem.Allocator, io: std.Io, device: []const u8,
     print("Partition {} successfully resized to {} MB\n", .{ partition_num, size_mb });
 }
 
-fn resizeToMax(allocator: std.mem.Allocator, io: std.Io, device: []const u8, partition_num: u32) !void {
-    print("Resizing partition {} on device '{s}' to maximum available space...\n", .{ partition_num, device });
+fn resizeToMax(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    device: []const u8,
+    partition_num: u32,
+) !void {
+    print(
+        "Resizing partition {} on device '{s}' to maximum available space...\n",
+        .{ partition_num, device },
+    );
 
     var gpt = zgpt.ZGpt.init(allocator, io, device) catch |err| switch (err) {
         error.DeviceNotFound => {

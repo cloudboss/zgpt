@@ -28,7 +28,12 @@ pub const TestGptImage = struct {
     }
 };
 
-pub fn createGptEntry(type_guid: gpt_types.Guid, start_lba: u64, end_lba: u64, name: []const u8) gpt_types.GptEntry {
+pub fn createGptEntry(
+    type_guid: gpt_types.Guid,
+    start_lba: u64,
+    end_lba: u64,
+    name: []const u8,
+) gpt_types.GptEntry {
     var entry = gpt_types.GptEntry{
         .type_guid = type_guid,
         .partition_guid = gpt_types.Guid.random(),
@@ -74,7 +79,13 @@ pub const GptImageBuilder = struct {
         _ = self;
     }
 
-    pub fn addPartition(self: *GptImageBuilder, type_guid: gpt_types.Guid, start_lba: u64, end_lba: u64, name: []const u8) !void {
+    pub fn addPartition(
+        self: *GptImageBuilder,
+        type_guid: gpt_types.Guid,
+        start_lba: u64,
+        end_lba: u64,
+        name: []const u8,
+    ) !void {
         if (self.partition_count >= 128) return error.TooManyPartitions;
         const entry = createGptEntry(type_guid, start_lba, end_lba, name);
         self.partitions[self.partition_count] = entry;
@@ -92,7 +103,10 @@ pub const GptImageBuilder = struct {
 
         // Create primary GPT header at sector 1
         const primary_header_offset = self.sector_size;
-        try self.createGptHeader(data[primary_header_offset .. primary_header_offset + self.sector_size], true);
+        try self.createGptHeader(
+            data[primary_header_offset .. primary_header_offset + self.sector_size],
+            true,
+        );
 
         // Create partition entries starting at sector 2
         const entries_start_sector: u64 = 2;
@@ -104,11 +118,16 @@ pub const GptImageBuilder = struct {
         const backup_entries_sectors = (entries_size + self.sector_size - 1) / self.sector_size;
         const backup_entries_start = self.total_sectors - backup_entries_sectors - 1;
         const backup_entries_offset = backup_entries_start * self.sector_size;
-        try self.createPartitionEntries(data[backup_entries_offset .. backup_entries_offset + entries_size]);
+        try self.createPartitionEntries(
+            data[backup_entries_offset .. backup_entries_offset + entries_size],
+        );
 
         // Create backup GPT header at last sector
         const backup_header_offset = (self.total_sectors - 1) * self.sector_size;
-        try self.createGptHeader(data[backup_header_offset .. backup_header_offset + self.sector_size], false);
+        try self.createGptHeader(
+            data[backup_header_offset .. backup_header_offset + self.sector_size],
+            false,
+        );
 
         return TestGptImage{
             .data = data,
@@ -123,6 +142,8 @@ pub const GptImageBuilder = struct {
 
         var header: *gpt_types.GptHeader = @ptrCast(@alignCast(sector.ptr));
 
+        const entry_size = @sizeOf(gpt_types.GptEntry);
+
         header.signature = std.mem.nativeToLittle(u64, gpt_types.GPT_HEADER_SIGNATURE);
         header.revision = std.mem.nativeToLittle(u32, gpt_types.GPT_HEADER_REVISION_V1_00);
         header.header_size = std.mem.nativeToLittle(u32, gpt_types.GPT_HEADER_MINSZ);
@@ -135,18 +156,27 @@ pub const GptImageBuilder = struct {
         } else {
             header.my_lba = std.mem.nativeToLittle(u64, self.total_sectors - 1);
             header.alternate_lba = std.mem.nativeToLittle(u64, 1);
-            const backup_entries_sectors = ((gpt_types.GPT_NPARTITIONS_DEFAULT * @sizeOf(gpt_types.GptEntry)) + self.sector_size - 1) / self.sector_size;
-            header.partition_entry_lba = std.mem.nativeToLittle(u64, self.total_sectors - backup_entries_sectors - 1);
+            const total_entry_bytes = gpt_types.GPT_NPARTITIONS_DEFAULT * entry_size;
+            const backup_entries_sectors =
+                (total_entry_bytes + self.sector_size - 1) / self.sector_size;
+            header.partition_entry_lba = std.mem.nativeToLittle(
+                u64,
+                self.total_sectors - backup_entries_sectors - 1,
+            );
         }
 
         header.first_usable_lba = std.mem.nativeToLittle(u64, 34); // After GPT data
-        header.last_usable_lba = std.mem.nativeToLittle(u64, self.total_sectors - 34); // Before backup GPT
+        // Before backup GPT
+        header.last_usable_lba = std.mem.nativeToLittle(u64, self.total_sectors - 34);
         header.disk_guid = self.disk_guid;
-        header.num_partition_entries = std.mem.nativeToLittle(u32, gpt_types.GPT_NPARTITIONS_DEFAULT);
-        header.sizeof_partition_entry = std.mem.nativeToLittle(u32, @sizeOf(gpt_types.GptEntry));
+        header.num_partition_entries = std.mem.nativeToLittle(
+            u32,
+            gpt_types.GPT_NPARTITIONS_DEFAULT,
+        );
+        header.sizeof_partition_entry = std.mem.nativeToLittle(u32, entry_size);
 
         // Calculate partition array CRC32
-        const entries_size = gpt_types.GPT_NPARTITIONS_DEFAULT * @sizeOf(gpt_types.GptEntry);
+        const entries_size = gpt_types.GPT_NPARTITIONS_DEFAULT * entry_size;
         const entries_data = try self.allocator.alloc(u8, entries_size);
         defer self.allocator.free(entries_data);
         @memset(entries_data, 0);
@@ -154,8 +184,9 @@ pub const GptImageBuilder = struct {
         // Create temporary partition entries for CRC calculation
         for (0..self.partition_count) |i| {
             const partition_entry = self.partitions[i].?;
-            const entry_offset = i * @sizeOf(gpt_types.GptEntry);
-            const entry: *gpt_types.GptEntry = @ptrCast(@alignCast(entries_data[entry_offset .. entry_offset + @sizeOf(gpt_types.GptEntry)].ptr));
+            const entry_offset = i * entry_size;
+            const entry_bytes = entries_data[entry_offset .. entry_offset + entry_size];
+            const entry: *gpt_types.GptEntry = @ptrCast(@alignCast(entry_bytes.ptr));
             entry.* = partition_entry;
         }
 
@@ -171,10 +202,12 @@ pub const GptImageBuilder = struct {
     fn createPartitionEntries(self: *GptImageBuilder, entries_data: []u8) !void {
         @memset(entries_data, 0);
 
+        const entry_size = @sizeOf(gpt_types.GptEntry);
         for (0..self.partition_count) |i| {
             const partition_entry = self.partitions[i].?;
-            const entry_offset = i * @sizeOf(gpt_types.GptEntry);
-            const entry: *gpt_types.GptEntry = @ptrCast(@alignCast(entries_data[entry_offset .. entry_offset + @sizeOf(gpt_types.GptEntry)].ptr));
+            const entry_offset = i * entry_size;
+            const entry_bytes = entries_data[entry_offset .. entry_offset + entry_size];
+            const entry: *gpt_types.GptEntry = @ptrCast(@alignCast(entry_bytes.ptr));
             entry.* = partition_entry;
         }
     }

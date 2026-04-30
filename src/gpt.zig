@@ -152,7 +152,23 @@ pub const Guid = extern struct {
     pub fn toString(self: *const Guid, buffer: []u8) ![]const u8 {
         if (buffer.len < 36) return error.BufferTooSmall;
 
-        return std.fmt.bufPrint(buffer, "{X:0>8}-{X:0>4}-{X:0>4}-{X:0>2}{X:0>2}-{X:0>2}{X:0>2}{X:0>2}{X:0>2}{X:0>2}{X:0>2}", .{ self.time_low, self.time_mid, self.time_hi_and_version, self.clock_seq_hi, self.clock_seq_low, self.node[0], self.node[1], self.node[2], self.node[3], self.node[4], self.node[5] });
+        return std.fmt.bufPrint(
+            buffer,
+            "{X:0>8}-{X:0>4}-{X:0>4}-{X:0>2}{X:0>2}-{X:0>2}{X:0>2}{X:0>2}{X:0>2}{X:0>2}{X:0>2}",
+            .{
+                self.time_low,
+                self.time_mid,
+                self.time_hi_and_version,
+                self.clock_seq_hi,
+                self.clock_seq_low,
+                self.node[0],
+                self.node[1],
+                self.node[2],
+                self.node[3],
+                self.node[4],
+                self.node[5],
+            },
+        );
     }
 
     pub fn random() Guid {

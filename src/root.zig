@@ -46,7 +46,11 @@ pub const ZGpt = struct {
         try self.context.save();
     }
 
-    pub fn resizePartitionByNumber(self: *Self, partition_number: u32, new_size_mb: u64) ZGptError!void {
+    pub fn resizePartitionByNumber(
+        self: *Self,
+        partition_number: u32,
+        new_size_mb: u64,
+    ) ZGptError!void {
         const operation = resize.ResizeOperation.byMegabytes(partition_number, new_size_mb);
         try resize.resizePartition(&self.context, operation, resize.ResizeConstraints{});
     }

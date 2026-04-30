@@ -54,7 +54,11 @@ pub const ResizeError = error{
     AlignmentError,
 } || gpt_types.GptError;
 
-pub fn resizePartition(context: *GptContext, operation: ResizeOperation, constraints: ResizeConstraints) ResizeError!void {
+pub fn resizePartition(
+    context: *GptContext,
+    operation: ResizeOperation,
+    constraints: ResizeConstraints,
+) ResizeError!void {
     try context.load();
 
     const partition = context.getPartition(operation.partition_number) orelse
@@ -106,7 +110,12 @@ pub fn resizePartition(context: *GptContext, operation: ResizeOperation, constra
     try context.save();
 }
 
-fn checkForOverlaps(context: *GptContext, skip_partition: u32, start: u64, end: u64) ResizeError!void {
+fn checkForOverlaps(
+    context: *GptContext,
+    skip_partition: u32,
+    start: u64,
+    end: u64,
+) ResizeError!void {
     const entries = context.partition_entries orelse return ResizeError.PartitionNotFound;
 
     for (entries, 0..) |*entry, i| {
@@ -165,7 +174,11 @@ pub fn calculateMaxResizeSize(context: *GptContext, partition_number: u32) !u64 
     return max_end - current_start + 1;
 }
 
-pub fn resizeToMaxSize(context: *GptContext, partition_number: u32, constraints: ResizeConstraints) ResizeError!void {
+pub fn resizeToMaxSize(
+    context: *GptContext,
+    partition_number: u32,
+    constraints: ResizeConstraints,
+) ResizeError!void {
     const max_size = try calculateMaxResizeSize(context, partition_number);
     if (max_size == 0) return ResizeError.NotEnoughSpace;
 
@@ -173,7 +186,11 @@ pub fn resizeToMaxSize(context: *GptContext, partition_number: u32, constraints:
     try resizePartition(context, operation, constraints);
 }
 
-pub fn shrinkPartition(context: *GptContext, partition_number: u32, new_size_sectors: u64) ResizeError!void {
+pub fn shrinkPartition(
+    context: *GptContext,
+    partition_number: u32,
+    new_size_sectors: u64,
+) ResizeError!void {
     var constraints = ResizeConstraints{};
     constraints.allow_shrinking = true;
 
@@ -181,7 +198,11 @@ pub fn shrinkPartition(context: *GptContext, partition_number: u32, new_size_sec
     try resizePartition(context, operation, constraints);
 }
 
-pub fn growPartition(context: *GptContext, partition_number: u32, additional_sectors: u64) ResizeError!void {
+pub fn growPartition(
+    context: *GptContext,
+    partition_number: u32,
+    additional_sectors: u64,
+) ResizeError!void {
     const partition = context.getPartition(partition_number) orelse
         return ResizeError.PartitionNotFound;
 
@@ -206,7 +227,11 @@ pub const PartitionInfo = struct {
     }
 };
 
-pub fn getPartitionInfo(context: *GptContext, partition_number: u32, allocator: Allocator) !?PartitionInfo {
+pub fn getPartitionInfo(
+    context: *GptContext,
+    partition_number: u32,
+    allocator: Allocator,
+) !?PartitionInfo {
     const partition = context.getPartition(partition_number) orelse return null;
 
     const name = try partition.getName(allocator);
