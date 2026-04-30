@@ -14,7 +14,14 @@ test "integration: load, resize, save, reload" {
     const temp_path = "tests/data/temp_integration_test.img";
     defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/complex_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
+    try std.Io.Dir.copyFile(
+        std.Io.Dir.cwd(),
+        "tests/data/valid/complex_gpt.img",
+        std.Io.Dir.cwd(),
+        temp_path,
+        io,
+        .{},
+    );
 
     // First pass: load and resize
     {
@@ -57,7 +64,9 @@ test "integration: load, resize, save, reload" {
 
         // Size should be approximately 6MB (in sectors)
         const expected_sectors = (6 * 1024 * 1024) / 512;
-        try testing.expect(@abs(@as(i64, @intCast(reloaded_info.?.size_sectors)) - @as(i64, @intCast(expected_sectors))) < 100);
+        const actual: i64 = @intCast(reloaded_info.?.size_sectors);
+        const expected: i64 = @intCast(expected_sectors);
+        try testing.expect(@abs(actual - expected) < 100);
 
         var reloaded_info_copy = reloaded_info.?;
         reloaded_info_copy.deinit(allocator);
@@ -72,7 +81,14 @@ test "integration: multiple resize operations" {
     const temp_path = "tests/data/temp_multi_resize_test.img";
     defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/complex_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
+    try std.Io.Dir.copyFile(
+        std.Io.Dir.cwd(),
+        "tests/data/valid/complex_gpt.img",
+        std.Io.Dir.cwd(),
+        temp_path,
+        io,
+        .{},
+    );
 
     var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
@@ -119,7 +135,14 @@ test "integration: edge case with minimal disk" {
     // Copy for modification
     const temp_path = "tests/data/temp_minimal_test.img";
     defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
-    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/minimal_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
+    try std.Io.Dir.copyFile(
+        std.Io.Dir.cwd(),
+        "tests/data/valid/minimal_gpt.img",
+        std.Io.Dir.cwd(),
+        temp_path,
+        io,
+        .{},
+    );
 
     var gpt_temp = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt_temp.deinit();

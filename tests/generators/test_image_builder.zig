@@ -33,7 +33,11 @@ const SWAP_GUID = zgpt.gpt.Guid{
     .node = [_]u8{ 0x09, 0x33, 0xC8, 0x4B, 0x4F, 0x4F },
 };
 
-pub fn createBasicGpt(allocator: std.mem.Allocator, io: std.Io, output_path: []const u8) !void {
+pub fn createBasicGpt(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    output_path: []const u8,
+) !void {
     var builder = try gpt_generator.GptImageBuilder.init(allocator, 10); // 10MB
     defer builder.deinit();
 
@@ -49,7 +53,11 @@ pub fn createBasicGpt(allocator: std.mem.Allocator, io: std.Io, output_path: []c
     try image.writeToFile(io, output_path);
 }
 
-pub fn createComplexGpt(allocator: std.mem.Allocator, io: std.Io, output_path: []const u8) !void {
+pub fn createComplexGpt(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    output_path: []const u8,
+) !void {
     var builder = try gpt_generator.GptImageBuilder.init(allocator, 50); // 50MB
     defer builder.deinit();
 
@@ -73,7 +81,11 @@ pub fn createComplexGpt(allocator: std.mem.Allocator, io: std.Io, output_path: [
     try image.writeToFile(io, output_path);
 }
 
-pub fn createFullDiskGpt(allocator: std.mem.Allocator, io: std.Io, output_path: []const u8) !void {
+pub fn createFullDiskGpt(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    output_path: []const u8,
+) !void {
     var builder = try gpt_generator.GptImageBuilder.init(allocator, 5); // 5MB
     defer builder.deinit();
 
@@ -86,7 +98,11 @@ pub fn createFullDiskGpt(allocator: std.mem.Allocator, io: std.Io, output_path: 
     try image.writeToFile(io, output_path);
 }
 
-pub fn createMinimalGpt(allocator: std.mem.Allocator, io: std.Io, output_path: []const u8) !void {
+pub fn createMinimalGpt(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    output_path: []const u8,
+) !void {
     var builder = try gpt_generator.GptImageBuilder.init(allocator, 1); // 1MB - minimal size
     defer builder.deinit();
 
@@ -99,7 +115,11 @@ pub fn createMinimalGpt(allocator: std.mem.Allocator, io: std.Io, output_path: [
     try image.writeToFile(io, output_path);
 }
 
-pub fn createEmptyGpt(allocator: std.mem.Allocator, io: std.Io, output_path: []const u8) !void {
+pub fn createEmptyGpt(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    output_path: []const u8,
+) !void {
     var builder = try gpt_generator.GptImageBuilder.init(allocator, 5); // 5MB
     defer builder.deinit();
 
@@ -111,7 +131,11 @@ pub fn createEmptyGpt(allocator: std.mem.Allocator, io: std.Io, output_path: []c
     try image.writeToFile(io, output_path);
 }
 
-pub fn createMaxPartitionsGpt(allocator: std.mem.Allocator, io: std.Io, output_path: []const u8) !void {
+pub fn createMaxPartitionsGpt(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    output_path: []const u8,
+) !void {
     var builder = try gpt_generator.GptImageBuilder.init(allocator, 100); // 100MB
     defer builder.deinit();
 
@@ -134,7 +158,11 @@ pub fn createMaxPartitionsGpt(allocator: std.mem.Allocator, io: std.Io, output_p
     try image.writeToFile(io, output_path);
 }
 
-pub fn createBoundaryPartitionsGpt(allocator: std.mem.Allocator, io: std.Io, output_path: []const u8) !void {
+pub fn createBoundaryPartitionsGpt(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    output_path: []const u8,
+) !void {
     var builder = try gpt_generator.GptImageBuilder.init(allocator, 10); // 10MB
     defer builder.deinit();
 
@@ -150,8 +178,18 @@ pub fn createBoundaryPartitionsGpt(allocator: std.mem.Allocator, io: std.Io, out
     try image.writeToFile(io, output_path);
 }
 
-pub fn createCorruptedHeader(allocator: std.mem.Allocator, io: std.Io, input_path: []const u8, output_path: []const u8) !void {
-    const input_data = try std.Io.Dir.cwd().readFileAlloc(io, input_path, allocator, .limited(100 * 1024 * 1024));
+pub fn createCorruptedHeader(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    input_path: []const u8,
+    output_path: []const u8,
+) !void {
+    const input_data = try std.Io.Dir.cwd().readFileAlloc(
+        io,
+        input_path,
+        allocator,
+        .limited(100 * 1024 * 1024),
+    );
     defer allocator.free(input_data);
 
     var output_data = try allocator.dupe(u8, input_data);
@@ -164,8 +202,18 @@ pub fn createCorruptedHeader(allocator: std.mem.Allocator, io: std.Io, input_pat
     try writeImageFile(io, output_path, output_data);
 }
 
-pub fn createCorruptedPartitionArray(allocator: std.mem.Allocator, io: std.Io, input_path: []const u8, output_path: []const u8) !void {
-    const input_data = try std.Io.Dir.cwd().readFileAlloc(io, input_path, allocator, .limited(100 * 1024 * 1024));
+pub fn createCorruptedPartitionArray(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    input_path: []const u8,
+    output_path: []const u8,
+) !void {
+    const input_data = try std.Io.Dir.cwd().readFileAlloc(
+        io,
+        input_path,
+        allocator,
+        .limited(100 * 1024 * 1024),
+    );
     defer allocator.free(input_data);
 
     var output_data = try allocator.dupe(u8, input_data);
@@ -178,8 +226,18 @@ pub fn createCorruptedPartitionArray(allocator: std.mem.Allocator, io: std.Io, i
     try writeImageFile(io, output_path, output_data);
 }
 
-pub fn createInvalidSignature(allocator: std.mem.Allocator, io: std.Io, input_path: []const u8, output_path: []const u8) !void {
-    const input_data = try std.Io.Dir.cwd().readFileAlloc(io, input_path, allocator, .limited(100 * 1024 * 1024));
+pub fn createInvalidSignature(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    input_path: []const u8,
+    output_path: []const u8,
+) !void {
+    const input_data = try std.Io.Dir.cwd().readFileAlloc(
+        io,
+        input_path,
+        allocator,
+        .limited(100 * 1024 * 1024),
+    );
     defer allocator.free(input_data);
 
     var output_data = try allocator.dupe(u8, input_data);
@@ -192,8 +250,18 @@ pub fn createInvalidSignature(allocator: std.mem.Allocator, io: std.Io, input_pa
     try writeImageFile(io, output_path, output_data);
 }
 
-pub fn createTruncated(allocator: std.mem.Allocator, io: std.Io, input_path: []const u8, output_path: []const u8) !void {
-    const input_data = try std.Io.Dir.cwd().readFileAlloc(io, input_path, allocator, .limited(100 * 1024 * 1024));
+pub fn createTruncated(
+    allocator: std.mem.Allocator,
+    io: std.Io,
+    input_path: []const u8,
+    output_path: []const u8,
+) !void {
+    const input_data = try std.Io.Dir.cwd().readFileAlloc(
+        io,
+        input_path,
+        allocator,
+        .limited(100 * 1024 * 1024),
+    );
     defer allocator.free(input_data);
 
     // Truncate to just past partition entries
@@ -244,16 +312,36 @@ pub fn buildAllTestImages(allocator: std.mem.Allocator, io: std.Io) !void {
     std.debug.print("Created tests/data/edge_cases/boundary_partitions.img\n", .{});
 
     // Invalid test images (based on basic GPT)
-    try createCorruptedHeader(allocator, io, "tests/data/valid/basic_gpt.img", "tests/data/invalid/corrupted_header.img");
+    try createCorruptedHeader(
+        allocator,
+        io,
+        "tests/data/valid/basic_gpt.img",
+        "tests/data/invalid/corrupted_header.img",
+    );
     std.debug.print("Created tests/data/invalid/corrupted_header.img\n", .{});
 
-    try createCorruptedPartitionArray(allocator, io, "tests/data/valid/basic_gpt.img", "tests/data/invalid/corrupted_partition_array.img");
+    try createCorruptedPartitionArray(
+        allocator,
+        io,
+        "tests/data/valid/basic_gpt.img",
+        "tests/data/invalid/corrupted_partition_array.img",
+    );
     std.debug.print("Created tests/data/invalid/corrupted_partition_array.img\n", .{});
 
-    try createInvalidSignature(allocator, io, "tests/data/valid/basic_gpt.img", "tests/data/invalid/invalid_signature.img");
+    try createInvalidSignature(
+        allocator,
+        io,
+        "tests/data/valid/basic_gpt.img",
+        "tests/data/invalid/invalid_signature.img",
+    );
     std.debug.print("Created tests/data/invalid/invalid_signature.img\n", .{});
 
-    try createTruncated(allocator, io, "tests/data/valid/basic_gpt.img", "tests/data/invalid/truncated.img");
+    try createTruncated(
+        allocator,
+        io,
+        "tests/data/valid/basic_gpt.img",
+        "tests/data/invalid/truncated.img",
+    );
     std.debug.print("Created tests/data/invalid/truncated.img\n", .{});
 
     std.debug.print("All test images created successfully!\n", .{});

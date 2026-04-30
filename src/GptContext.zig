@@ -184,7 +184,10 @@ pub fn readPartitionEntries(self: *Self) !void {
     var i: u32 = 0;
     while (i < num_entries) : (i += 1) {
         const entry_offset = i * entry_size;
-        entries[i] = std.mem.bytesToValue(gpt.GptEntry, buffer[entry_offset .. entry_offset + entry_size]);
+        entries[i] = std.mem.bytesToValue(
+            gpt.GptEntry,
+            buffer[entry_offset .. entry_offset + entry_size],
+        );
     }
 
     // Validate partition array CRC

@@ -14,7 +14,14 @@ test "resize partition to larger size" {
     const temp_path = "tests/data/temp_resize_test.img";
     defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/complex_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
+    try std.Io.Dir.copyFile(
+        std.Io.Dir.cwd(),
+        "tests/data/valid/complex_gpt.img",
+        std.Io.Dir.cwd(),
+        temp_path,
+        io,
+        .{},
+    );
 
     var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
@@ -48,7 +55,14 @@ test "resize partition to maximum size" {
     const temp_path = "tests/data/temp_resize_max_test.img";
     defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/complex_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
+    try std.Io.Dir.copyFile(
+        std.Io.Dir.cwd(),
+        "tests/data/valid/complex_gpt.img",
+        std.Io.Dir.cwd(),
+        temp_path,
+        io,
+        .{},
+    );
 
     var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
@@ -82,7 +96,14 @@ test "resize partition beyond available space" {
     const temp_path = "tests/data/temp_resize_overflow_test.img";
     defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/complex_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
+    try std.Io.Dir.copyFile(
+        std.Io.Dir.cwd(),
+        "tests/data/valid/complex_gpt.img",
+        std.Io.Dir.cwd(),
+        temp_path,
+        io,
+        .{},
+    );
 
     var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
@@ -101,7 +122,14 @@ test "resize nonexistent partition" {
     const temp_path = "tests/data/temp_resize_nonexistent_test.img";
     defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/basic_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
+    try std.Io.Dir.copyFile(
+        std.Io.Dir.cwd(),
+        "tests/data/valid/basic_gpt.img",
+        std.Io.Dir.cwd(),
+        temp_path,
+        io,
+        .{},
+    );
 
     var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
@@ -120,7 +148,14 @@ test "resize single partition disk" {
     const temp_path = "tests/data/temp_resize_single_test.img";
     defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/full_disk.img", std.Io.Dir.cwd(), temp_path, io, .{});
+    try std.Io.Dir.copyFile(
+        std.Io.Dir.cwd(),
+        "tests/data/valid/full_disk.img",
+        std.Io.Dir.cwd(),
+        temp_path,
+        io,
+        .{},
+    );
 
     var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
@@ -154,7 +189,14 @@ test "resize with invalid size" {
     const temp_path = "tests/data/temp_resize_invalid_test.img";
     defer std.Io.Dir.cwd().deleteFile(io, temp_path) catch {};
 
-    try std.Io.Dir.copyFile(std.Io.Dir.cwd(), "tests/data/valid/basic_gpt.img", std.Io.Dir.cwd(), temp_path, io, .{});
+    try std.Io.Dir.copyFile(
+        std.Io.Dir.cwd(),
+        "tests/data/valid/basic_gpt.img",
+        std.Io.Dir.cwd(),
+        temp_path,
+        io,
+        .{},
+    );
 
     var gpt = try zgpt.ZGpt.init(allocator, io, temp_path);
     defer gpt.deinit();
